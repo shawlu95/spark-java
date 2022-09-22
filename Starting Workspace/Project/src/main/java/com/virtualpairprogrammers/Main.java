@@ -36,9 +36,18 @@ public class Main {
 
         assert acc.value() == 6;
 
+        // side effect
+        // myRdd.foreach(System.out::println);
+        // rootRdd.foreach(System.out::println);
+
         System.out.println(sum);
         System.out.println(rootSum);
         System.out.println(acc.value());
+        System.out.printf("How many item: %d%n", rootRdd.count());
+
+        // dumb count
+        Integer count = rootRdd.map(x -> 1).reduce(Integer::sum);
+        System.out.printf("How many item: %d%n", count);
 
         sc.close();
     }
