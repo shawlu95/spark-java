@@ -31,9 +31,13 @@ public class Main {
 
         Double sum = myRdd.reduce((Double a, Double b) -> a + b);
 
+        JavaRDD<Double> rootRdd = myRdd.map(Math::sqrt);
+        Double rootSum = rootRdd.reduce(Double::sum);
+
         assert acc.value() == 6;
 
         System.out.println(sum);
+        System.out.println(rootSum);
         System.out.println(acc.value());
 
         sc.close();
