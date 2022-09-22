@@ -36,9 +36,9 @@ public class Main {
 
         assert acc.value() == 6;
 
-        // side effect
-        // myRdd.foreach(System.out::println);
-        // rootRdd.foreach(System.out::println);
+        // side effect, collect to avoid serialization error
+         myRdd.collect().forEach(System.out::println);
+         rootRdd.collect().forEach(System.out::println);
 
         System.out.println(sum);
         System.out.println(rootSum);
