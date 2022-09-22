@@ -29,9 +29,12 @@ public class Main {
 
         myRdd.foreach(acc::add);
 
-        myRdd.reduce((Double a, Double b) -> a + b);
+        Double sum = myRdd.reduce((Double a, Double b) -> a + b);
 
         assert acc.value() == 6;
+
+        System.out.println(sum);
+        System.out.println(acc.value());
 
         sc.close();
     }
