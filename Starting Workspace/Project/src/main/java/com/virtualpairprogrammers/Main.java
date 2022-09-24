@@ -6,6 +6,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.util.DoubleAccumulator;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,6 +49,9 @@ public class Main {
         // dumb count
         Integer count = rootRdd.map(x -> 1).reduce(Integer::sum);
         System.out.printf("How many item: %d%n", count);
+
+        JavaRDD<Tuple2<Double, Double>> pairRdd = myRdd.map(x -> new Tuple2<>(x, Math.sqrt(x)));
+        pairRdd.collect().forEach(x -> System.out.println(x));
 
         sc.close();
     }
