@@ -1,6 +1,7 @@
 package com.virtualpairprogrammers;
 
 
+import com.google.common.collect.Iterables;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -32,7 +33,10 @@ public class PairRdd {
 
         // groupByKey can lead to performance issue on real-world dataset
         // due to hot keys with much more data than cold keys
-        // JavaPairRDD<String, Iterable<String>> group = pairRdd.groupByKey();
+         JavaPairRDD<String, Iterable<Long>> group = pairRdd.groupByKey();
+
+         // guava is a transitive dependency of apache spark, can directly use
+         group.foreach(tuple -> System.out.println(tuple._1 + " has " + Iterables.size(tuple._2) + " instances"));;
 
         JavaPairRDD<String, Long> sumsRdd = pairRdd.reduceByKey((a, b) -> a + b);
         sumsRdd.foreach(tuple -> System.out.println(tuple._1 + " has " + tuple._2 + " instances"));
