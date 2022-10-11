@@ -37,6 +37,11 @@ public class PairRdd {
         JavaPairRDD<String, Long> sumsRdd = pairRdd.reduceByKey((a, b) -> a + b);
         sumsRdd.foreach(tuple -> System.out.println(tuple._1 + " has " + tuple._2 + " instances"));
 
+        // one liner
+        sc.parallelize(inputData)
+            .mapToPair(raw -> new Tuple2<>(raw.split(":")[0], 1))
+            .reduceByKey(Integer::sum)
+            .foreach(tuple -> System.out.println(tuple._1 + " has " + tuple._2 + " instances"));
         sc.close();
     }
 }
