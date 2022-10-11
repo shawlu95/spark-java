@@ -52,6 +52,9 @@ public class PairRdd {
         JavaRDD<String> words = origMessages.flatMap(value -> Arrays.asList(value.split(" ")).iterator());
         words.foreach(x -> System.out.println(x));
 
+        JavaRDD<String> filtered = words.filter(x -> x.contains(":"));
+        filtered.foreach(x -> System.out.println(x));
+        
         sc.close();
     }
 }
