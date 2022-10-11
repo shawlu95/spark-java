@@ -24,12 +24,19 @@ public class PairRdd {
         SparkConf conf = new SparkConf().setAppName("PairRdd").setMaster("local[*]");
         JavaSparkContext sc = new JavaSparkContext(conf);
         JavaRDD<String> origMessages = sc.parallelize(inputData);
-        JavaPairRDD<String, String> pairRdd = origMessages.mapToPair(msg -> {
+        JavaPairRDD<String, Long> pairRdd = origMessages.mapToPair(msg -> {
             String[] cols = msg.split(":");
             String level = cols[0];
-            String log = cols[1];
-            return new Tuple2<>(level, log);
+            return new Tuple2<>(level, 1L);
         });
+
+        // groupByKey can lead to performance issue on real-world dataset
+        // due to hot keys with much more data than cold keys
+        // JavaPairRDD<String, Iterable<String>> group = pairRdd.groupByKey();
+
+        JavaPairRDD<String, Long> sumsRdd = pairRdd.reduceByKey((a, b) -> a + b);
+        sumsRdd.foreach(tuple -> System.out.println(tuple._1 + " has " + tuple._2 + " instances"));
+
         sc.close();
     }
 }
