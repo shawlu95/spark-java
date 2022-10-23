@@ -39,6 +39,20 @@ public class ReadDisk {
         JavaPairRDD<Long, String> sorted = switched.sortByKey(false); // false for sorting desc
 
         // print top 10 keywords
+        // sorted.take(10).forEach(x -> System.out.println(x));
+
+        // bad results (not globally sorted)
+        // foreach is sent to each worker to be executed in PARALLEL threads
+        // so the printed results are interwoven
+        // sorted.foreach(x -> System.out.println(x));
+
+        // bad solution, force into a single partition, risk of OOM
+        // sorted.coalesce(1).foreach(x -> System.out.println(x));
+
+        // CRITICAL: should get correct answers regardless of how Spark organizes partitions
+        // System.out.println("Number of partitions: " + sorted.getNumPartitions());
+
+        // correct solution, take top 10 (action) which is taken from global sorting
         sorted.take(10).forEach(x -> System.out.println(x));
         sc.close();
     }
