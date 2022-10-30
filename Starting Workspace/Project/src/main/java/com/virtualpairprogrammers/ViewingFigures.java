@@ -26,7 +26,7 @@ public class ViewingFigures
 		JavaSparkContext sc = new JavaSparkContext(conf);
 		
 		// Use true to use hardcoded data identical to that in the PDF guide.
-		boolean testMode = true;
+		boolean testMode = false;
 		
 		JavaPairRDD<Integer, Integer> viewData = setUpViewDataRdd(sc, testMode);
 		JavaPairRDD<Integer, Integer> chapterData = setUpChapterDataRdd(sc, testMode);
@@ -36,7 +36,60 @@ public class ViewingFigures
 		JavaPairRDD<Integer, Integer> chapterCount =
 				chapterData.mapToPair(row -> new Tuple2<Integer, Integer>(row._2, 1)).reduceByKey((a, b) -> a + b);
 		chapterCount.foreach(x -> System.out.println(x));
-		
+
+		// step 1: deduplicate chapter view
+		viewData = viewData.distinct();
+		viewData.foreach(x -> System.out.println(x));
+
+		// step 2: get the course IDs into RDD
+		viewData = viewData.mapToPair(row -> new Tuple2<Integer, Integer>(row._2, row._1));
+		viewData.foreach(x-> System.out.println(x));
+
+		// chapter ID -> (user, course)
+		JavaPairRDD<Integer, Tuple2<Integer, Integer>> joined = viewData.join(chapterData);
+		joined.foreach(x -> System.out.println(x));
+
+		// step 3: get rid of chapter ID, group by (userId, courseId), count how many times a course is viewed
+		JavaPairRDD<Tuple2<Integer, Integer>, Long> step3 = joined.mapToPair(row -> {
+			Integer userId = row._2._1;
+			Integer courseId = row._2._2;
+			return new Tuple2<>(new Tuple2<>(userId, courseId), 1L);
+		});
+
+		// step 4: count how many views for each course
+		JavaPairRDD<Tuple2<Integer, Integer>, Long> step4 = step3.reduceByKey((a, b) -> a + b);
+		step4.foreach(x -> System.out.println(x));
+
+		// step 5: remove userId (courseId, view count)
+		JavaPairRDD<Integer, Long> step5 = step4.mapToPair(x -> new Tuple2<>(x._1._2, x._2));
+		step5.foreach(x -> System.out.println(x));
+
+		// step 6: attached chapter count for each course
+		JavaPairRDD<Integer, Tuple2<Long, Integer>> step6 = step5.join(chapterCount);
+		step6.foreach(x -> System.out.println(x));
+
+		// step 7: convert to ratio, keep key, transform value
+		JavaPairRDD<Integer, Double> step7 = step6.mapValues(x -> (double) x._1 / x._2);
+		step7.foreach(x -> System.out.println(x));
+
+		// step 8: convert to score, keep key, transform value
+		JavaPairRDD<Integer, Integer> step8 = step7.mapValues(value -> {
+			if (value > 0.9) return 10;
+			if (value > 0.5) return 4;
+			if (value > 0.25) return 2;
+			return 0;
+		});
+		step8.foreach(x -> System.out.println(x));
+
+		// step 9:
+		JavaPairRDD<Integer, Integer> step9 = step8.reduceByKey((a, b) -> a + b);
+		JavaPairRDD<Integer, Tuple2<Integer, String>> step10 = step9.join(titlesData);
+
+		step10.mapToPair(row -> new Tuple2<Integer, String>(row._2._1, row._2._2))
+				.sortByKey(false)
+				.collect()
+				.forEach(x -> System.out.println(x));
+
 		sc.close();
 	}
 
