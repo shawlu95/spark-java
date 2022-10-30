@@ -1,15 +1,14 @@
 package com.virtualpairprogrammers;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-
 import scala.Tuple2;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class is used in the chapter late in the course where we analyse viewing figures.
@@ -39,9 +38,7 @@ public class ViewingFigures
 	}
 
 	private static JavaPairRDD<Integer, String> setUpTitlesDataRdd(JavaSparkContext sc, boolean testMode) {
-		
-		if (testMode)
-		{
+		if (testMode) {
 			// (chapterId, title)
 			List<Tuple2<Integer, String>> rawTitles = new ArrayList<>();
 			rawTitles.add(new Tuple2<>(1, "How to find a better job"));
@@ -49,17 +46,16 @@ public class ViewingFigures
 			rawTitles.add(new Tuple2<>(3, "Content Creation is a Mug's Game"));
 			return sc.parallelizePairs(rawTitles);
 		}
+
 		return sc.textFile("src/main/resources/viewing figures/titles.csv")
-				                                    .mapToPair(commaSeparatedLine -> {
-														String[] cols = commaSeparatedLine.split(",");
-														return new Tuple2<Integer, String>(new Integer(cols[0]),cols[1]);
-				                                    });
+				.mapToPair(commaSeparatedLine -> {
+					String[] cols = commaSeparatedLine.split(",");
+					return new Tuple2<Integer, String>(new Integer(cols[0]),cols[1]);
+				});
 	}
 
 	private static JavaPairRDD<Integer, Integer> setUpChapterDataRdd(JavaSparkContext sc, boolean testMode) {
-		
-		if (testMode)
-		{
+		if (testMode) {
 			// (chapterId, (courseId, courseTitle))
 			List<Tuple2<Integer, Integer>> rawChapterData = new ArrayList<>();
 			rawChapterData.add(new Tuple2<>(96,  1));
@@ -80,16 +76,14 @@ public class ViewingFigures
 		}
 
 		return sc.textFile("src/main/resources/viewing figures/chapters.csv")
-													  .mapToPair(commaSeparatedLine -> {
-															String[] cols = commaSeparatedLine.split(",");
-															return new Tuple2<Integer, Integer>(new Integer(cols[0]), new Integer(cols[1]));
-													  	});
+				.mapToPair(commaSeparatedLine -> {
+					String[] cols = commaSeparatedLine.split(",");
+					return new Tuple2<Integer, Integer>(new Integer(cols[0]), new Integer(cols[1]));
+				});
 	}
 
 	private static JavaPairRDD<Integer, Integer> setUpViewDataRdd(JavaSparkContext sc, boolean testMode) {
-		
-		if (testMode)
-		{
+		if (testMode) {
 			// Chapter views - (userId, chapterId)
 			List<Tuple2<Integer, Integer>> rawViewData = new ArrayList<>();
 			rawViewData.add(new Tuple2<>(14, 96));
@@ -103,9 +97,9 @@ public class ViewingFigures
 		}
 		
 		return sc.textFile("src/main/resources/viewing figures/views-*.csv")
-				     .mapToPair(commaSeparatedLine -> {
-				    	 String[] columns = commaSeparatedLine.split(",");
-				    	 return new Tuple2<Integer, Integer>(new Integer(columns[0]), new Integer(columns[1]));
-				     });
+				.mapToPair(commaSeparatedLine -> {
+					String[] columns = commaSeparatedLine.split(",");
+					return new Tuple2<Integer, Integer>(new Integer(columns[0]), new Integer(columns[1]));
+				});
 	}
 }
