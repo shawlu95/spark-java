@@ -13,6 +13,7 @@ import org.apache.spark.sql.types.StructType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * It's useful to create a dummy dataset for unit testing */
@@ -42,5 +43,13 @@ public class InMemorySql {
         Dataset<Row> df = sc.createDataFrame(inMemory, schema);
 
         df.show(10);
+
+        df.createOrReplaceTempView("logging_table");
+        sc.sql("select level, max(datetime) as latest from logging_table group by level").show(10);
+
+        // hack: user the scanner to avoid terminating program
+        // view Spark UI at: http://localhost:4040/jobs/
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
     }
 }
