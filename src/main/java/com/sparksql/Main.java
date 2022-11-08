@@ -6,7 +6,10 @@ import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+
 import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.date_format;
 
 public class Main {
 
@@ -79,5 +82,21 @@ public class Main {
 
 		grouped.createOrReplaceTempView("grouped");
 		sc.sql("select sum(total) from grouped").show();
+
+		// -----------------------------------------------------------------
+		// JAVA API
+
+		ds.select("level", "datetime").show(10);
+
+		// fragmented sql
+		ds.selectExpr("level", "date_format(datetime, 'MMMM') as month").show(10);
+
+		Dataset<Row> select = ds.select(
+				col("level"),
+				date_format(col("datetime"), "MMMM").alias("month"),
+				date_format(col("datetime"), "M").alias("mon").cast(DataTypes.IntegerType)
+		);
+		select = select.groupBy(col("level"), col("month"), col("mon")).count();
+		select.orderBy(col("level"), col("mon")).drop("mon").show(false);
 	}
 }
