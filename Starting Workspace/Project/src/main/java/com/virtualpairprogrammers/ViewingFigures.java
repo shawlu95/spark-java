@@ -9,6 +9,7 @@ import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * This class is used in the chapter late in the course where we analyse viewing figures.
@@ -89,6 +90,11 @@ public class ViewingFigures
 				.sortByKey(false)
 				.collect()
 				.forEach(x -> System.out.println(x));
+
+		// hack: user the scanner to avoid terminating program
+		// view Spark UI at: http://localhost:4040/jobs/
+		Scanner scanner = new Scanner(System.in);
+		scanner.nextLine();
 
 		sc.close();
 	}

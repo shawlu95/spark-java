@@ -8,6 +8,7 @@ import scala.Tuple2;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -54,6 +55,12 @@ public class ReadDisk {
 
         // correct solution, take top 10 (action) which is taken from global sorting
         sorted.take(10).forEach(x -> System.out.println(x));
+
+        // hack: user the scanner to avoid terminating program
+        // view Spark UI at: http://localhost:4040/jobs/
+        Scanner scanner = new Scanner(System.in);
+        scanner.nextLine();
+
         sc.close();
     }
 }
