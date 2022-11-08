@@ -65,5 +65,19 @@ public class Main {
 		agg.show(100);
 
 		sc.sql("select year, count(distinct student_id) as student_count from students group by year order by year").show(100);
+
+		// a more realistic dataset
+		Dataset<Row> ds = sc.read().option("header", true).csv("src/main/resources/extra/bigLog.txt");
+		ds.createOrReplaceTempView("biglog");
+		Dataset<Row> grouped = sc.sql("select level, " +
+				"date_format(datetime, 'MM') mon, " +
+				"date_format(datetime, 'MMMM') as month, " +
+				"count(*) as total " +
+				"from biglog group by 1, 2, 3 order by 1, 2").drop("mon");
+
+		grouped.show(false);
+
+		grouped.createOrReplaceTempView("grouped");
+		sc.sql("select sum(total) from grouped").show();
 	}
 }
