@@ -45,7 +45,8 @@ public class InMemorySql {
         df.show(10);
 
         df.createOrReplaceTempView("logging_table");
-        sc.sql("select level, max(datetime) as latest from logging_table group by level").show(10);
+        sc.sql("select level, max(datetime) as latest from logging_table group by level").show();
+        sc.sql("select level, date_format(datetime, 'yyyy MMMM dd') as date from logging_table").show();
 
         // hack: user the scanner to avoid terminating program
         // view Spark UI at: http://localhost:4040/jobs/
