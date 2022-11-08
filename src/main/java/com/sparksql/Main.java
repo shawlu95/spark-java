@@ -12,7 +12,6 @@ public class Main {
 
 	@SuppressWarnings("resource")
 	public static void main(String[] args) {
-		System.setProperty("hadoop.home.dir", "c:/hadoop");
 		Logger.getLogger("org.apache").setLevel(Level.WARN);
 		Logger logger = Logger.getLogger(Main.class);
 
