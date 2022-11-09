@@ -8,6 +8,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.date_format;
 
@@ -96,7 +99,24 @@ public class Main {
 				date_format(col("datetime"), "MMMM").alias("month"),
 				date_format(col("datetime"), "M").alias("mon").cast(DataTypes.IntegerType)
 		);
-		select = select.groupBy(col("level"), col("month"), col("mon")).count();
-		select.orderBy(col("level"), col("mon")).drop("mon").show(false);
+		select.groupBy(col("level"), col("month"), col("mon"))
+				.count()
+				.orderBy(col("level"), col("mon"))
+				.drop("mon")
+				.show(false);
+
+		// using level as row, month as column
+		select.groupBy("level").pivot("month").count().show(false);
+
+		// passing in a list of columns to specify order
+		// if column name is not found will show null, can fill_na using .na().fill(val)
+		Object[] cols = new Object[] {
+				"January", "February", "March", "April", "May", "June", "July", "August",
+				"September", "October", "November", "Decemberr"
+		};
+		List<Object> columns = Arrays.asList(cols);
+
+		// fill na with a desired value
+		select.groupBy("level").pivot("month", columns).count().na().fill(0).show(false);
 	}
 }
