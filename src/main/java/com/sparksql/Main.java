@@ -8,6 +8,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 
@@ -118,5 +119,19 @@ public class Main {
 
 		// fill na with a desired value
 		select.groupBy("level").pivot("month", columns).count().na().fill(0).show(false);
+
+		// UDF example
+		SimpleDateFormat input = new SimpleDateFormat("MMMM");
+		SimpleDateFormat output = new SimpleDateFormat("M");
+		sc.udf().register("monthNum", (String month) -> {
+			java.util.Date inputDate = input.parse(month);
+			return Integer.parseInt(output.format(inputDate));
+		}, DataTypes.IntegerType);
+
+		// simplify SQL using UDF
+		sc.sql("select level, " +
+				"date_format(datetime, 'MMMM') as month, " +
+				"count(*) as total " +
+				"from biglog group by level, month order by monthNum(month), level");
 	}
 }
