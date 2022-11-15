@@ -11,6 +11,7 @@ import org.apache.spark.sql.types.DataTypes;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.date_format;
@@ -30,6 +31,9 @@ public class Main {
 		Dataset<Row> dataset = sc.read()
 				.option("header", true)
 				.csv("src/main/resources/exams/students.csv");
+
+		// default is 200, which creates too much empty partition
+		sc.conf().set("spark.sql.shuffle.partitions", "12");
 
 		dataset.show();
 		logger.info("Number of rows: " + dataset.count());
@@ -133,5 +137,10 @@ public class Main {
 				"date_format(datetime, 'MMMM') as month, " +
 				"count(*) as total " +
 				"from biglog group by level, month order by monthNum(month), level");
+
+		// hack: user the scanner to avoid terminating program
+		// view Spark UI at: http://localhost:4040/jobs/
+		Scanner scanner = new Scanner(System.in);
+		scanner.nextLine();
 	}
 }
