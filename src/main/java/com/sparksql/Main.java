@@ -136,7 +136,7 @@ public class Main {
 		sc.sql("select level, " +
 				"date_format(datetime, 'MMMM') as month, " +
 				"count(*) as total " +
-				"from biglog group by level, month order by monthNum(month), level");
+				"from biglog group by level, 2 order by monthNum(month), level");
 
 		// hack: user the scanner to avoid terminating program
 		// view Spark UI at: http://localhost:4040/jobs/
