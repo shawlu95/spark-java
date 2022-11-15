@@ -5,6 +5,8 @@ import org.apache.log4j.Logger;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 
+import static org.apache.spark.sql.functions.*;
+
 public class Aggregation {
     @SuppressWarnings("resource")
     public static void main(String[] args) {
@@ -23,13 +25,18 @@ public class Aggregation {
 
         dataset.groupBy("subject").max("score").show(false);
 
-        Column score = functions.col("score");
-        Column subject = functions.col("subject");
+        Column score = col("score");
+        Column subject = col("subject");
         // doesn't work due to poor API design, use agg instead
         // dataset.groupBy(subject).max(score.cast(DataTypes.IntegerType)).show(false);
         dataset.groupBy(subject).agg(
-                functions.max(score).cast(DataTypes.IntegerType).alias("highest"),
-                functions.min(score).alias("lowest"))
+                max(score).cast(DataTypes.IntegerType).alias("highest"),
+                min(score).alias("lowest"))
+                .show(false);
+
+        // pivot
+        dataset.groupBy(subject).pivot("year")
+                .agg(round(avg(score), 2).alias("avg"), round(stddev(score), 2).alias("std"))
                 .show(false);
     }
 }
