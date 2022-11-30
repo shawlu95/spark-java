@@ -8,7 +8,10 @@ import java.net.Socket;
 /**
  * Simulate a streaming source from a web server
  * A basic example. Nowhere near production standard.
- * Run as a regular Java application. Expect nothing in console log. */
+ * Run as a regular Java application. Expect nothing in console log.
+ *
+ * If client disconnects, must restart the server!
+ * */
 public class LoggingServer {
 	public static void main(String[] args) throws IOException, InterruptedException {
 	    ServerSocket echoSocket = new ServerSocket(8989);
