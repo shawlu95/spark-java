@@ -1,4 +1,4 @@
-package com.stream;
+package com.stream.socket;
 
 import java.io.IOException;
 import java.io.PrintWriter;
