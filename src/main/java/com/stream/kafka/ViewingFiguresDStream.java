@@ -45,12 +45,14 @@ public class ViewingFiguresDStream {
                     LocationStrategies.PreferConsistent(),
                     ConsumerStrategies.Subscribe(topics, params));
 
-       JavaPairDStream<Long, String> results =
+        // underlying batch is 1 seconds, this is the finest resolution, unit of computing
+        // pass in a second duration param (slide step) to perform calculation every minute
+        JavaPairDStream<Long, String> results =
                stream.mapToPair(item -> new Tuple2<>(item.value(), 5L))
-                       .reduceByKeyAndWindow((x, y) -> x + y, Durations.minutes(60))
+                       .reduceByKeyAndWindow((x, y) -> x + y, Durations.minutes(60), Durations.minutes(1))
                        .mapToPair(item -> item.swap())
                        .transformToPair(rdd -> rdd.sortByKey(false));
-       results.print();
+        results.print();
 
         jsc.start();
         jsc.awaitTermination();
