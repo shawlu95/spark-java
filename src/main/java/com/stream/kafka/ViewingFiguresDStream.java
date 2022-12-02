@@ -7,10 +7,12 @@ import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaInputDStream;
+import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka010.ConsumerStrategies;
 import org.apache.spark.streaming.kafka010.KafkaUtils;
 import org.apache.spark.streaming.kafka010.LocationStrategies;
+import scala.Tuple2;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,7 +45,12 @@ public class ViewingFiguresDStream {
                     LocationStrategies.PreferConsistent(),
                     ConsumerStrategies.Subscribe(topics, params));
 
-        stream.map(item -> item.value()).print();
+       JavaPairDStream<Long, String> results =
+               stream.mapToPair(item -> new Tuple2<>(item.value(), 5L))
+                       .reduceByKey((x, y) -> x + y)
+                       .mapToPair(item -> item.swap())
+                       .transformToPair(rdd -> rdd.sortByKey(false));
+       results.print();
 
         jsc.start();
         jsc.awaitTermination();
