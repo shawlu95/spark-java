@@ -13,6 +13,7 @@ import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import static org.apache.spark.sql.functions.col;
 
 public class HousePrice {
     public static void main(String[] args) {
@@ -28,11 +29,13 @@ public class HousePrice {
                 .option("header", true)
                 .option("inferSchema", true)
                 .csv("src/main/resources/ml/kc_house_data.csv");
+        csv = csv.withColumn("sqft_above_pcf",
+                col("sqft_above").divide(col("sqft_living")));
 
         VectorAssembler assembler = new VectorAssembler()
                 .setInputCols(new String[]{
                         "bedrooms", "bathrooms", "sqft_living",
-                        "sqft_lot", "floors", "grade" })
+                        "sqft_above_pcf", "floors", "grade" })
                 .setOutputCol("features");
 
         Dataset<Row> dataset = assembler
