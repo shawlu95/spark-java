@@ -39,7 +39,11 @@ public class HousePrice {
         Dataset<Row> train = array[0];
         Dataset<Row> test = array[1];
 
-        LinearRegressionModel model = new LinearRegression().fit(train);
+        LinearRegressionModel model = new LinearRegression()
+                .setMaxIter(10)
+                .setRegParam(0.3)
+                .setElasticNetParam(0.8)
+                .fit(train);
         model.transform(test).show(10);
         System.out.println("Training set R2:" + model.summary().r2());
         System.out.println("Training set RMSE:" + model.summary().rootMeanSquaredError());
