@@ -25,7 +25,9 @@ public class HousePrice {
                 .csv("src/main/resources/ml/kc_house_data.csv");
 
         VectorAssembler assembler = new VectorAssembler()
-                .setInputCols(new String[]{ "bedrooms", "bathrooms", "sqft_living" })
+                .setInputCols(new String[]{
+                        "bedrooms", "bathrooms", "sqft_living",
+                        "sqft_lot", "floors", "grade" })
                 .setOutputCol("features");
 
         Dataset<Row> dataset = assembler
