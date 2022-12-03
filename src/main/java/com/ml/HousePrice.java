@@ -39,5 +39,10 @@ public class HousePrice {
 
         LinearRegressionModel model = new LinearRegression().fit(train);
         model.transform(test).show(10);
+        System.out.println("Training set R2:" + model.summary().r2());
+        System.out.println("Training set RMSE:" + model.summary().rootMeanSquaredError());
+
+        System.out.println("Test set R2:" + model.evaluate(test).r2());
+        System.out.println("Test set RMSE:" + model.evaluate(test).rootMeanSquaredError());
     }
 }
