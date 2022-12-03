@@ -42,6 +42,7 @@ public class ViewingFiguresStructuredStream {
                 .outputMode(OutputMode.Complete())
                 .option("truncate", false)
                 .option("numRows", 50)
+//                .trigger(Trigger.ProcessingTime(30, TimeUnit.SECONDS)) // micro batch size, not recommended
                 .start();
 
         query.awaitTermination();
