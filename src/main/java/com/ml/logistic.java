@@ -3,6 +3,9 @@ package com.ml;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.ml.feature.VectorAssembler;
+import org.apache.spark.ml.linalg.Vector;
+import org.apache.spark.ml.regression.LinearRegression;
+import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -27,6 +30,16 @@ public class logistic {
         assembler.setOutputCol("features");
         Dataset<Row> dataset = assembler
                 .transform(csv)
-                .select("NoOfReps", "features");
+                .select("NoOfReps", "features")
+                .withColumnRenamed("NoOfReps", "label");
+
+        LinearRegression lr = new LinearRegression();
+        LinearRegressionModel model = lr.fit(dataset);
+        double intercept = model.intercept();
+        Vector coeffs = model.coefficients();
+        System.out.println("intercept: " + intercept);
+        System.out.println("coeffs: " + coeffs);
+
+        model.transform(dataset).show(10);
     }
 }
