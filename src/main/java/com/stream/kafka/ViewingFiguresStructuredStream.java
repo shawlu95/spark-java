@@ -21,6 +21,9 @@ public class ViewingFiguresStructuredStream {
                 .appName("ViewingFiguresStructuredStream")
                 .getOrCreate();
 
+        // default is 200 partitions, but we only have 50 course key! reduce partition number
+        session.conf().set("spark.sql.shuffle.partitions", 4);
+
         Dataset<Row> df = session.readStream()
                 .format("kafka")
                 .option("kafka.bootstrap.servers", "localhost:9092")
