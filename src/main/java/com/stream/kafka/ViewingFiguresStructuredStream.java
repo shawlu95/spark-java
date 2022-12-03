@@ -33,13 +33,15 @@ public class ViewingFiguresStructuredStream {
         // key, value, timestamp
         // full aggregation on "infinite" growing table, no window
         Dataset<Row> results = session.sql(
-                "select cast(value as string) as course_name, " +
+                "select window, cast(value as string) as course_name, " +
                         "sum(5) watch_time " +
-                        "from t group by course_name");
+                        "from t group by window(timestamp, '2 minutes'), course_name");
 
         StreamingQuery query = results.writeStream()
                 .format("console")
                 .outputMode(OutputMode.Complete())
+                .option("truncate", false)
+                .option("numRows", 50)
                 .start();
 
         query.awaitTermination();
