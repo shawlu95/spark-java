@@ -22,12 +22,21 @@ public class HousePriceExplore {
 
         csv.describe().show(false);
 
+        // ignore features that have weak correlation with label
         csv = csv.drop(
                 "id", "date", "waterfront", "view",
                 "condition", "grade", "yr_renovated",
                 "zipcode", "lat", "long");
         for (String col : csv.columns()) {
             System.out.println("corr price-" + col + ":" + csv.stat().corr("price", col));
+        }
+
+        // remove correlated features: sqft_living, sqft_above, sqft_basement
+        csv = csv.drop("sqft_lot", "sqft_lot15", "yr_built", "sqft_living15");
+        for (String a : csv.columns()) {
+            for (String b : csv.columns()) {
+                System.out.println("corr" + a + "-" + b + ":" + csv.stat().corr(a, b));
+            }
         }
     }
 }
