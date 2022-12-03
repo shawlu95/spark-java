@@ -3,6 +3,8 @@ package com.ml;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.ml.feature.VectorAssembler;
+import org.apache.spark.ml.regression.LinearRegression;
+import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -31,6 +33,11 @@ public class HousePrice {
                 .select("price", "features")
                 .withColumnRenamed("price", "label");
 
-        dataset.show(10);
+        Dataset<Row>[] array = dataset.randomSplit(new double[] { 0.8, 0.5}, 0);
+        Dataset<Row> train = array[0];
+        Dataset<Row> test = array[1];
+
+        LinearRegressionModel model = new LinearRegression().fit(train);
+        model.transform(test).show(10);
     }
 }
