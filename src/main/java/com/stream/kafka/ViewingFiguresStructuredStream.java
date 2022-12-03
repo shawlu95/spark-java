@@ -31,7 +31,7 @@ public class ViewingFiguresStructuredStream {
         df.createOrReplaceTempView("t");
 
         // key, value, timestamp
-        Dataset<Row> results = session.sql("select value from t");
+        Dataset<Row> results = session.sql("select cast(value as string) as course_name from t");
 
         StreamingQuery query = results.writeStream()
                 .format("console")
