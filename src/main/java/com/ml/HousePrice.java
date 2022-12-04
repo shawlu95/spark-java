@@ -2,6 +2,9 @@ package com.ml;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.ml.Pipeline;
+import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.evaluation.RegressionEvaluator;
 import org.apache.spark.ml.feature.OneHotEncoderEstimator;
 import org.apache.spark.ml.feature.StringIndexer;
@@ -33,27 +36,28 @@ public class HousePrice {
                 .option("inferSchema", true)
                 .csv("src/main/resources/ml/kc_house_data.csv");
         csv = csv.withColumn("sqft_above_pcf",
-                col("sqft_above").divide(col("sqft_living")));
-        
+                        col("sqft_above").divide(col("sqft_living")))
+                .withColumnRenamed("price", "label");
+
+        Dataset<Row>[] array = csv.randomSplit(new double[] { 0.8, 0.2 }, 0);
+        Dataset<Row> trainVal = array[0];
+        Dataset<Row> test = array[1];
+
         StringIndexer conditionIndexer = new StringIndexer()
                 .setInputCol("condition")
                 .setOutputCol("conditionIndex");
-        csv = conditionIndexer.fit(csv).transform(csv);
 
         StringIndexer gradeIndexer = new StringIndexer()
                 .setInputCol("grade")
                 .setOutputCol("gradeIndex");
-        csv = gradeIndexer.fit(csv).transform(csv);
 
         StringIndexer zipcodeIndexer = new StringIndexer()
                 .setInputCol("zipcode")
                 .setOutputCol("zipcodeIndex");
-        csv = zipcodeIndexer.fit(csv).transform(csv);
 
         OneHotEncoderEstimator encoder = new OneHotEncoderEstimator()
                 .setInputCols(new String[] { "conditionIndex", "gradeIndex", "zipcodeIndex"})
                 .setOutputCols(new String[] { "conditionVector", "gradeVector", "zipcodeVector"});
-        csv = encoder.fit(csv).transform(csv);
 
         VectorAssembler assembler = new VectorAssembler()
                 .setInputCols(new String[]{
@@ -62,31 +66,40 @@ public class HousePrice {
                         "conditionVector", "gradeVector", "zipcodeVector" })
                 .setOutputCol("features");
 
-        Dataset<Row> dataset = assembler
-                .transform(csv)
-                .select("price", "features")
-                .withColumnRenamed("price", "label");
-
-        Dataset<Row>[] array = dataset.randomSplit(new double[] { 0.8, 0.2 }, 0);
-        Dataset<Row> trainVal = array[0];
-        Dataset<Row> test = array[1];
-
+        // trainValSplit is a stage that memorizes model and params search grid
         LinearRegression regressor = new LinearRegression();
         ParamGridBuilder gridBuilder = new ParamGridBuilder();
         ParamMap[] paramMaps = gridBuilder
                 .addGrid(regressor.regParam(), new double[] { 0.01, 0.1, 0.5 })
                 .addGrid(regressor.elasticNetParam(), new double[] { 0, 0.5, 1.0 })
                 .build();
-
         TrainValidationSplit trainValSplit = new TrainValidationSplit()
                 .setEstimator(regressor)
                 .setEvaluator(new RegressionEvaluator().setMetricName("r2"))
                 .setEstimatorParamMaps(paramMaps)
                 .setTrainRatio(0.8);
 
-        TrainValidationSplitModel model = trainValSplit.fit(trainVal);
+        // assemble pipeline and fit on training set
+        Pipeline pipeline = new Pipeline()
+                .setStages(new PipelineStage[] {
+                        conditionIndexer,
+                        gradeIndexer,
+                        zipcodeIndexer,
+                        encoder,
+                        assembler,
+                        trainValSplit
+                });
+        PipelineModel pipelineModel = pipeline.fit(trainVal);
+
+        // extract model from pipeline
+        TrainValidationSplitModel model = (TrainValidationSplitModel) pipelineModel.stages()[5];
         LinearRegressionModel lrModel = (LinearRegressionModel) model.bestModel();
-        lrModel.transform(test).show(10);
+
+        // apply the fitted pipeline to test set, a "prediction" column is added
+        test = pipelineModel.transform(test);
+        test.show(10);
+        test = test.drop("prediction"); // avoid exception with evaluate(test) later
+
         System.out.println("Training set R2:" + lrModel.summary().r2());
         System.out.println("Training set RMSE:" + lrModel.summary().rootMeanSquaredError());
 
