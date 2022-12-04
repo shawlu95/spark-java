@@ -8,6 +8,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
+import java.util.List;
+
 import static org.apache.spark.sql.functions.col;
 
 public class VppCourseRecommendations {
@@ -50,8 +52,30 @@ public class VppCourseRecommendations {
                 .setItemCol("courseId")
                 .setRatingCol("proportionWatched");
         ALSModel model = als.fit(train);
+        model.setColdStartStrategy("drop");
 
         Dataset<Row> pred = model.transform(test);
         pred.show(10);
+
+        //TODO: resolve "java.io.NotSerializableException: scala.reflect.api.TypeTags$PredefTypeCreator"
+        Dataset<Row> userRecs = model.recommendForAllUsers(5);
+        List<Row> userRecsList = userRecs.takeAsList(10);
+        for (Row rec : userRecsList) {
+            int userId = rec.getAs(0);
+            String recs = rec.getAs(1).toString();
+            System.out.println("user:" + userId + " may like:" + recs);
+            System.out.println("user already watched:");
+            csv.filter("userId = " + userId).show();
+        }
+
+        //TODO: resolve "java.io.NotSerializableException: scala.reflect.api.TypeTags$PredefTypeCreator"
+        Dataset<Row> testData = spark.read()
+                .option("header", true)
+                .option("inferSchema", true)
+                .csv("src/main/resources/ml/VppCourseViewsTest.csv");
+        testData.show();
+
+        model.transform(test).show();
+        model.recommendForUserSubset(testData, 5).show();
     }
 }
