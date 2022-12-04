@@ -42,8 +42,8 @@ public class VppFreeTrial {
                 .option("inferSchema", true)
                 .csv("src/main/resources/ml/vppFreeTrials.csv");
 
-        csv = csv.withColumn("country",
-                callUDF("countryGrouping", col("country")));
+        csv = csv.withColumn("country", callUDF("countryGrouping", col("country")))
+                .withColumn("label", when(col("payments_made").geq(1), lit(1)).otherwise(lit(0)));
         csv.show(10);
     }
 }
