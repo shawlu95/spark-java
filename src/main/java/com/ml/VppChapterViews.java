@@ -20,12 +20,13 @@ import org.apache.spark.sql.SparkSession;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.when;
+
 public class VppChapterViews {
     public static void main(String[] args) {
         Logger.getLogger("org.apache").setLevel(Level.WARN);
 
         SparkSession spark = SparkSession.builder()
-                .appName("HousePrice")
+                .appName("VppChapterViews")
                 .master("local[*]")
                 .getOrCreate();
 
