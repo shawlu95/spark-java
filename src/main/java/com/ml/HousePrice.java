@@ -3,6 +3,8 @@ package com.ml;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.ml.evaluation.RegressionEvaluator;
+import org.apache.spark.ml.feature.OneHotEncoderEstimator;
+import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.regression.LinearRegression;
@@ -13,6 +15,7 @@ import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+
 import static org.apache.spark.sql.functions.col;
 
 public class HousePrice {
@@ -31,11 +34,32 @@ public class HousePrice {
                 .csv("src/main/resources/ml/kc_house_data.csv");
         csv = csv.withColumn("sqft_above_pcf",
                 col("sqft_above").divide(col("sqft_living")));
+        
+        StringIndexer conditionIndexer = new StringIndexer()
+                .setInputCol("condition")
+                .setOutputCol("conditionIndex");
+        csv = conditionIndexer.fit(csv).transform(csv);
+
+        StringIndexer gradeIndexer = new StringIndexer()
+                .setInputCol("grade")
+                .setOutputCol("gradeIndex");
+        csv = gradeIndexer.fit(csv).transform(csv);
+
+        StringIndexer zipcodeIndexer = new StringIndexer()
+                .setInputCol("zipcode")
+                .setOutputCol("zipcodeIndex");
+        csv = zipcodeIndexer.fit(csv).transform(csv);
+
+        OneHotEncoderEstimator encoder = new OneHotEncoderEstimator()
+                .setInputCols(new String[] { "conditionIndex", "gradeIndex", "zipcodeIndex"})
+                .setOutputCols(new String[] { "conditionVector", "gradeVector", "zipcodeVector"});
+        csv = encoder.fit(csv).transform(csv);
 
         VectorAssembler assembler = new VectorAssembler()
                 .setInputCols(new String[]{
                         "bedrooms", "bathrooms", "sqft_living",
-                        "sqft_above_pcf", "floors", "grade" })
+                        "sqft_above_pcf", "floors", "grade",
+                        "conditionVector", "gradeVector", "zipcodeVector" })
                 .setOutputCol("features");
 
         Dataset<Row> dataset = assembler
