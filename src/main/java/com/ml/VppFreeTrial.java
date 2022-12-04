@@ -2,11 +2,12 @@ package com.ml;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.ml.classification.DecisionTreeClassificationModel;
+import org.apache.spark.ml.classification.DecisionTreeClassifier;
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.IndexToString;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.VectorAssembler;
-import org.apache.spark.ml.regression.DecisionTreeRegressionModel;
-import org.apache.spark.ml.regression.DecisionTreeRegressor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -74,11 +75,16 @@ public class VppFreeTrial {
         Dataset<Row> train = arr[0];
         Dataset<Row> test = arr[1];
 
-        DecisionTreeRegressor dt = new DecisionTreeRegressor()
+        DecisionTreeClassifier dt = new DecisionTreeClassifier()
                 .setMaxDepth(3);
-        DecisionTreeRegressionModel model = dt.fit(train);
+        DecisionTreeClassificationModel model = dt.fit(train);
 
-        model.transform(test).show(100);
+        Dataset<Row> predictions = model.transform(test);
+        predictions.show(10);
         System.out.println(model.toDebugString());
+
+        MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
+                .setMetricName("accuracy");
+        System.out.println("accuracy:" + evaluator.evaluate(predictions));
     }
 }
