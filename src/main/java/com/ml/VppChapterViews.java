@@ -70,7 +70,10 @@ public class VppChapterViews {
                         encoder,
                         assembler
                 });
-        csv = pipeline.fit(csv).transform(csv).select("label", "features");
+        csv = pipeline
+                .fit(csv)
+                .transform(csv)
+                .select("label", "features");
         csv.show(10);
     }
 }
