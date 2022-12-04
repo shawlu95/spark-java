@@ -4,13 +4,22 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
+import org.apache.spark.ml.evaluation.RegressionEvaluator;
 import org.apache.spark.ml.feature.OneHotEncoderEstimator;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.VectorAssembler;
+import org.apache.spark.ml.param.ParamMap;
+import org.apache.spark.ml.regression.LinearRegression;
+import org.apache.spark.ml.regression.LinearRegressionModel;
+import org.apache.spark.ml.tuning.ParamGridBuilder;
+import org.apache.spark.ml.tuning.TrainValidationSplit;
+import org.apache.spark.ml.tuning.TrainValidationSplitModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import static org.apache.spark.sql.functions.*;
+
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.when;
 public class VppChapterViews {
     public static void main(String[] args) {
         Logger.getLogger("org.apache").setLevel(Level.WARN);
@@ -74,6 +83,28 @@ public class VppChapterViews {
                 .fit(csv)
                 .transform(csv)
                 .select("label", "features");
-        csv.show(10);
+        Dataset<Row>[] arr = csv.randomSplit(new double[] { 0.9, 0.1 });
+        Dataset<Row> trainVal = arr[0];
+        Dataset<Row> test = arr[1];
+
+        LinearRegression lr = new LinearRegression();
+        ParamMap[] grid = new ParamGridBuilder()
+                .addGrid(lr.regParam(), new double[] { 0.01, 0.1, 0.3, 0.5, 0.7, 1.0 })
+                .addGrid(lr.elasticNetParam(), new double[] { 0.0, 0.5, 1.0 })
+                .build();
+        TrainValidationSplit trainValidationSplit = new TrainValidationSplit()
+                .setEstimator(lr)
+                .setEvaluator(new RegressionEvaluator().setMetricName("r2"))
+                .setEstimatorParamMaps(grid)
+                .setTrainRatio(0.9);
+
+        TrainValidationSplitModel model = trainValidationSplit.fit(trainVal);
+        LinearRegressionModel lrModel = (LinearRegressionModel) model.bestModel();
+        System.out.println("R2:" + lrModel.summary().r2());
+        System.out.println("Test set R2:" + lrModel.evaluate(test).r2());
+        System.out.println("intercept:" + lrModel.intercept());
+        System.out.println("coeff:" + lrModel.coefficients());
+        System.out.println("reg param:" + lrModel.getRegParam());
+        System.out.println("elastic net param:" + lrModel.getElasticNetParam());
     }
 }
