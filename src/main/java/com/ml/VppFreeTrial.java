@@ -2,6 +2,9 @@ package com.ml;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.ml.feature.IndexToString;
+import org.apache.spark.ml.feature.StringIndexer;
+import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -44,6 +47,27 @@ public class VppFreeTrial {
 
         csv = csv.withColumn("country", callUDF("countryGrouping", col("country")))
                 .withColumn("label", when(col("payments_made").geq(1), lit(1)).otherwise(lit(0)));
+
+        // decision tree doesn't need to one-hot encode numeric categorical features
+        csv = new StringIndexer()
+                .setInputCol("country")
+                .setOutputCol("countryIndex")
+                .fit(csv)
+                .transform(csv);
+
+        // get a index-country mapping
+        new IndexToString()
+                .setInputCol("countryIndex")
+                .setOutputCol("value")
+                .transform(csv.select("countryIndex").distinct())
+                .show();
+
+        VectorAssembler assembler = new VectorAssembler()
+                .setInputCols(new String[] { "countryIndex", "rebill_period", "chapter_access_count", "seconds_watched" })
+                .setOutputCol("features");
+
+        csv = assembler.transform(csv).select("label", "features");
+
         csv.show(10);
     }
 }
