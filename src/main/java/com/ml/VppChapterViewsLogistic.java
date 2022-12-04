@@ -104,5 +104,22 @@ public class VppChapterViewsLogistic {
                 .setTrainRatio(0.9);
 
         TrainValidationSplitModel model = trainValidationSplit.fit(trainVal);
+        LogisticRegressionModel lrModel = (LogisticRegressionModel) model.bestModel();
+
+        System.out.println("train accuracy:" + lrModel.summary().accuracy());
+
+        LogisticRegressionSummary evaluated = lrModel.evaluate(test);
+        System.out.println("test accuracy:" + evaluated.accuracy());
+        System.out.println("true positive:" + evaluated.truePositiveRateByLabel()[0]);
+        System.out.println("true negative:" + evaluated.truePositiveRateByLabel()[1]);
+        System.out.println("false positive:" + evaluated.falsePositiveRateByLabel()[0]);
+        System.out.println("false negative:" + evaluated.falsePositiveRateByLabel()[1]);
+
+        System.out.println("intercept:" + lrModel.intercept());
+        System.out.println("coeff:" + lrModel.coefficients());
+        System.out.println("reg param:" + lrModel.getRegParam());
+        System.out.println("elastic net param:" + lrModel.getElasticNetParam());
+
+        lrModel.transform(test).groupBy("label", "prediction").count().show(false);
     }
 }
