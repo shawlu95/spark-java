@@ -5,6 +5,8 @@ import org.apache.log4j.Logger;
 import org.apache.spark.ml.feature.IndexToString;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.VectorAssembler;
+import org.apache.spark.ml.regression.DecisionTreeRegressionModel;
+import org.apache.spark.ml.regression.DecisionTreeRegressor;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -68,6 +70,15 @@ public class VppFreeTrial {
 
         csv = assembler.transform(csv).select("label", "features");
 
-        csv.show(10);
+        Dataset<Row>[] arr = csv.randomSplit(new double[] { 0.8, 0.2 });
+        Dataset<Row> train = arr[0];
+        Dataset<Row> test = arr[1];
+
+        DecisionTreeRegressor dt = new DecisionTreeRegressor()
+                .setMaxDepth(3);
+        DecisionTreeRegressionModel model = dt.fit(train);
+
+        model.transform(test).show(100);
+        System.out.println(model.toDebugString());
     }
 }
