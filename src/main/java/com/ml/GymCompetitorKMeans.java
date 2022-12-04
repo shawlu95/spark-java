@@ -4,6 +4,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.ml.clustering.KMeans;
 import org.apache.spark.ml.clustering.KMeansModel;
+import org.apache.spark.ml.evaluation.ClusteringEvaluator;
 import org.apache.spark.ml.feature.OneHotEncoderEstimator;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.VectorAssembler;
@@ -52,5 +53,15 @@ public class GymCompetitorKMeans {
 
         Vector[] clusterCenters = model.clusterCenters();
         for (Vector v : clusterCenters) { System.out.println(v); };
+
+        System.out.println("dataset size:" + dataset.count());
+        pred.groupBy("prediction").count().show();
+
+        // sum of squared error (lower is better)
+        System.out.println("SSE:" + model.computeCost(dataset));
+
+        // Slihouette with squared euclidean distance (closer to 1 is better)
+        ClusteringEvaluator evaluator = new ClusteringEvaluator();
+        System.out.println("dist:" + evaluator.evaluate(pred));
     }
 }
