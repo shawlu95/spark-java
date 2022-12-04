@@ -4,6 +4,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.ml.classification.DecisionTreeClassificationModel;
 import org.apache.spark.ml.classification.DecisionTreeClassifier;
+import org.apache.spark.ml.classification.RandomForestClassificationModel;
+import org.apache.spark.ml.classification.RandomForestClassifier;
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator;
 import org.apache.spark.ml.feature.IndexToString;
 import org.apache.spark.ml.feature.StringIndexer;
@@ -86,5 +88,11 @@ public class VppFreeTrial {
         MulticlassClassificationEvaluator evaluator = new MulticlassClassificationEvaluator()
                 .setMetricName("accuracy");
         System.out.println("accuracy:" + evaluator.evaluate(predictions));
+
+        RandomForestClassifier rf = new RandomForestClassifier()
+                .setMaxDepth(3);
+        RandomForestClassificationModel rfModel = rf.fit(train);
+        Dataset<Row> rfPredictions = rfModel.transform(test);
+        System.out.println("rf accuracy:" + evaluator.evaluate(rfPredictions));
     }
 }
