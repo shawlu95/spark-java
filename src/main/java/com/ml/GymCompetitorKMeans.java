@@ -8,7 +8,6 @@ import org.apache.spark.ml.evaluation.ClusteringEvaluator;
 import org.apache.spark.ml.feature.OneHotEncoderEstimator;
 import org.apache.spark.ml.feature.StringIndexer;
 import org.apache.spark.ml.feature.VectorAssembler;
-import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -46,22 +45,25 @@ public class GymCompetitorKMeans {
                 .select("features");
 
         // we don't separate train & test set with unsupervised learning
-        KMeans kMeans = new KMeans().setK(3);
-        KMeansModel model = kMeans.fit(dataset);
-        Dataset<Row> pred = model.transform(dataset);
-        pred.show(10);
+        for (int k = 2; k <= 8; k++) {
+            KMeans kMeans = new KMeans().setK(k);
+            KMeansModel model = kMeans.fit(dataset);
+            Dataset<Row> pred = model.transform(dataset);
 
-        Vector[] clusterCenters = model.clusterCenters();
-        for (Vector v : clusterCenters) { System.out.println(v); };
+//            pred.show(10);
+//            Vector[] clusterCenters = model.clusterCenters();
+//            for (Vector v : clusterCenters) { System.out.println(v); };
 
-        System.out.println("dataset size:" + dataset.count());
-        pred.groupBy("prediction").count().show();
+            System.out.println("K:" + k);
+            System.out.println("dataset size:" + dataset.count());
+            pred.groupBy("prediction").count().show();
 
-        // sum of squared error (lower is better)
-        System.out.println("SSE:" + model.computeCost(dataset));
+            // sum of squared error (lower is better)
+            System.out.println("SSE:" + model.computeCost(dataset));
 
-        // Slihouette with squared euclidean distance (closer to 1 is better)
-        ClusteringEvaluator evaluator = new ClusteringEvaluator();
-        System.out.println("dist:" + evaluator.evaluate(pred));
+            // Slihouette with squared euclidean distance (closer to 1 is better)
+            ClusteringEvaluator evaluator = new ClusteringEvaluator();
+            System.out.println("dist:" + evaluator.evaluate(pred));
+        }
     }
 }
