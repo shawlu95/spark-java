@@ -2,6 +2,8 @@ package com.ml;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.ml.recommendation.ALS;
+import org.apache.spark.ml.recommendation.ALSModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -35,5 +37,21 @@ public class VppCourseRecommendations {
          * |   481|              null|              18.0|56.00000000000001|              61.0| 41.0|              null|              18.0|             100.0|             80.0|100.0| 94.0|            100.0| 31.0| 23.0|             72.0|             72.0| null| null| 51.0| 50.0|
          * +------+------------------+------------------+-----------------+------------------+-----+------------------+------------------+------------------+-----------------+-----+-----+-----------------+-----+-----+-----------------+-----------------+-----+-----+-----+-----+*/
         csv.groupBy("userId").pivot("courseId").sum("proportionWatched").show(5);
+
+        Dataset<Row>[] arr = csv.randomSplit(new double[] { 0.9, 0.1 });
+        Dataset<Row> train = arr[0];
+        Dataset<Row> test = arr[1];
+
+        // spark api needs three columns: user, item, rating (label)
+        ALS als = new ALS()
+                .setMaxIter(10)
+                .setRegParam(0.1)
+                .setUserCol("userId")
+                .setItemCol("courseId")
+                .setRatingCol("proportionWatched");
+        ALSModel model = als.fit(train);
+
+        Dataset<Row> pred = model.transform(test);
+        pred.show(10);
     }
 }
